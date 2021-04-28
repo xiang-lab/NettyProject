@@ -7,14 +7,16 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 
-public class ClientResponses extends ChannelInboundHandlerAdapter {
+public class ClientResponsesHandler extends ChannelInboundHandlerAdapter {
 
     // consumer...
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println("ClientResponses channelRead");
+
         ByteBuf buf = (ByteBuf) msg;
-        if (buf.readableBytes() >= 110) {
-            byte[] bytes = new byte[110];
+        if (buf.readableBytes() >= 100) {
+            byte[] bytes = new byte[100];
             buf.readBytes(bytes);
             ByteArrayInputStream in = new ByteArrayInputStream(bytes);
             ObjectInputStream oin = new ObjectInputStream(in);

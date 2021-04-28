@@ -1,7 +1,6 @@
 package com.kinight.netty.rpc;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -63,7 +62,7 @@ public class ClientFactory {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline p = ch.pipeline();
-                        p.addLast(new ClientResponses());   // 解决给谁的？
+                        p.addLast(new ClientResponsesHandler());   // 解决给谁的？
                     }
                 })
                 .connect(address);

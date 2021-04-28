@@ -17,30 +17,10 @@ public class ServerRequestHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf buf = (ByteBuf) msg;
-        ByteBuf sendBuf = buf.copy();
+        Packmsg buf = (Packmsg) msg;
 
-        if (buf.readableBytes() >= 110) {
-            byte[] bytes = new byte[110];
-            buf.readBytes(bytes);
-            ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-            ObjectInputStream oin = new ObjectInputStream(in);
-            MyHeader header = (MyHeader) oin.readObject();
-            System.out.println("server response @ dataLen: " + header.getDataLen());
-            System.out.println("server response @ id: " + header.getRequestID());
+        System.out.println("ServerRequestHandler.channelRead server handler" + buf.getContent().getMethod());
 
-            if (buf.readableBytes() >= header.getDataLen()) {
-                byte[] data = new byte[(int) header.getDataLen()];
-                buf.readBytes(data);
-                ByteArrayInputStream din = new ByteArrayInputStream(data);
-                ObjectInputStream doin = new ObjectInputStream(din);
-                MyContent content = (MyContent) doin.readObject();
-                System.out.println(content.getName());
-            }
-        }
-
-        ChannelFuture channelFuture = ctx.writeAndFlush(sendBuf);
-        channelFuture.sync();
     }
 
 

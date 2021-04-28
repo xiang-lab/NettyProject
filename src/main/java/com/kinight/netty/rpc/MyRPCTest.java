@@ -41,6 +41,15 @@ public class MyRPCTest {
 
         System.out.println("server started......");
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+//        Car car = proxyGet(Car.class);   // 动态代理
+//        car.ooxx("hello");
+
         int size = 20;
         Thread[] threads = new Thread[size];
         for (int i = 0; i < size; i++) {
@@ -60,9 +69,6 @@ public class MyRPCTest {
             e.printStackTrace();
         }
 
-//        Fly fly = proxyGet(Fly.class);   // 动态代理
-//        fly.xxoo("hello");
-
     }
 
     /**
@@ -80,10 +86,11 @@ public class MyRPCTest {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         System.out.println("server accept client port: " + ch.remoteAddress().getPort());
                         ChannelPipeline p = ch.pipeline();
+                        p.addLast(new ServerDecode());  // 先将解码器置入
                         p.addLast(new ServerRequestHandler());
                     }
                 })
-                .bind(new InetSocketAddress("localhost", 9090));
+                .bind(new InetSocketAddress("localhost", 9091));
 
         try {
             bind.sync().channel().closeFuture().sync();
@@ -134,7 +141,7 @@ public class MyRPCTest {
 
                 // 3. 连接池：取得连接
                 ClientFactory factory = ClientFactory.getFactory();
-                NioSocketChannel clientChannel = factory.getClient(new InetSocketAddress("localhost", 9090));
+                NioSocketChannel clientChannel = factory.getClient(new InetSocketAddress("localhost", 9091));
                 // 获取连接过程中：开始-创建，过程-直接取
 
                 // 4. 发送 ---> 走IO ---> 走netty
