@@ -2,6 +2,6 @@ package com.kinight.netty.rpc;
 
 public interface Car {
 
-    public void ooxx(String msg);
+    public String ooxx(String msg);
 
 }

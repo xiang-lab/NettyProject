@@ -4,10 +4,11 @@ import java.io.Serializable;
 
 public class MyContent implements Serializable {
 
-    String name;
-    String method;
-    Class<?>[] parameterTypes;
-    Object[] args;
+    private String name;
+    private String methodName;
+    private Class<?>[] parameterTypes;
+    private Object[] args;
+    private String res;
 
     public String getName() {
         return name;
@@ -17,12 +18,12 @@ public class MyContent implements Serializable {
         this.name = name;
     }
 
-    public String getMethod() {
-        return method;
+    public String getMethodName() {
+        return methodName;
     }
 
-    public void setMethod(String method) {
-        this.method = method;
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 
     public Class<?>[] getParameterTypes() {
@@ -39,5 +40,13 @@ public class MyContent implements Serializable {
 
     public void setArgs(Object[] args) {
         this.args = args;
+    }
+
+    public String getRes() {
+        return res;
+    }
+
+    public void setRes(String res) {
+        this.res = res;
     }
 }

@@ -19,7 +19,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 1. 先假设一个需求，写一个RPC
@@ -41,21 +43,16 @@ public class MyRPCTest {
 
         System.out.println("server started......");
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        AtomicInteger num = new AtomicInteger(0);
 
-//        Car car = proxyGet(Car.class);   // 动态代理
-//        car.ooxx("hello");
-
-        int size = 20;
+        int size = 50;
         Thread[] threads = new Thread[size];
         for (int i = 0; i < size; i++) {
             threads[i] = new Thread(() -> {
                 Car car = proxyGet(Car.class);   // 动态代理
-                car.ooxx("hello");
+                String arg = "hello" + num.incrementAndGet();
+                String res = car.ooxx(arg);
+                System.out.println("client over msg: " + res + " src arg: " + arg);
             });
         }
 
@@ -75,7 +72,7 @@ public class MyRPCTest {
      * 服务端
      */
     public void startServer() {
-        NioEventLoopGroup boss = new NioEventLoopGroup(1);
+        NioEventLoopGroup boss = new NioEventLoopGroup(20);
         NioEventLoopGroup worker = boss;
 
         ServerBootstrap sbs = new ServerBootstrap();
@@ -119,7 +116,7 @@ public class MyRPCTest {
 
                 MyContent content = new MyContent();
                 content.setName(name);
-                content.setMethod(methodName);
+                content.setMethodName(methodName);
                 content.setParameterTypes(parameterTypes);
                 content.setArgs(args);
 
@@ -127,6 +124,7 @@ public class MyRPCTest {
                 ObjectOutputStream oout = new ObjectOutputStream(out);
                 oout.writeObject(content);
                 // TODO: 解决数据decode问题
+                // TODO: Server: dispatcher Executor
                 byte[] msgBody = out.toByteArray();
 
                 // 2. requestID + message, 本地要缓存
@@ -147,28 +145,29 @@ public class MyRPCTest {
                 // 4. 发送 ---> 走IO ---> 走netty
                 ByteBuf byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(msgHeader.length + msgBody.length);
 
-                CountDownLatch countDownLatch = new CountDownLatch(1);
                 long id = header.getRequestID();
-                ResponseHandler.addCallBack(id, new Runnable() {
-                    @Override
-                    public void run() {
-                        countDownLatch.countDown();
-                    }
-                });
-
+//                CountDownLatch countDownLatch = new CountDownLatch(1);
+//                ResponseMappingCallback.addCallBack(id, new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        countDownLatch.countDown();
+//                    }
+//                });
+                CompletableFuture<String> res = new CompletableFuture<>();
+                ResponseMappingCallback.addCallBack(id, res);
 
                 byteBuf.writeBytes(msgHeader);
                 byteBuf.writeBytes(msgBody);
                 ChannelFuture channelFuture = clientChannel.writeAndFlush(byteBuf);
                 channelFuture.sync();   // IO是双向的，看似有个sync，仅仅代表out
 
-                countDownLatch.await();
+//                countDownLatch.await();
 
                 // 5. IO未来回来了，怎么将代码执行到这里
 
                 // (睡眠/回调，如何让线程停下来)
 
-                return null;
+                return res.get();   // 阻塞
             }
         });
     }
