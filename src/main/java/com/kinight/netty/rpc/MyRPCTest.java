@@ -72,6 +72,16 @@ public class MyRPCTest {
      * 服务端
      */
     public void startServer() {
+
+
+        MyCar car = new MyCar();
+        MyFly fly = new MyFly();
+
+        Dispatcher dis = new Dispatcher();
+        dis.register(Car.class.getName(), car);
+        dis.register(Fly.class.getName(), fly);
+
+
         NioEventLoopGroup boss = new NioEventLoopGroup(20);
         NioEventLoopGroup worker = boss;
 
@@ -84,7 +94,7 @@ public class MyRPCTest {
                         System.out.println("server accept client port: " + ch.remoteAddress().getPort());
                         ChannelPipeline p = ch.pipeline();
                         p.addLast(new ServerDecode());  // 先将解码器置入
-                        p.addLast(new ServerRequestHandler());
+                        p.addLast(new ServerRequestHandler(dis));
                     }
                 })
                 .bind(new InetSocketAddress("localhost", 9091));

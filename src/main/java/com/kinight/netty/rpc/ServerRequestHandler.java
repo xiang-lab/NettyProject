@@ -10,8 +10,16 @@ import io.netty.util.concurrent.EventExecutorGroup;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class ServerRequestHandler extends ChannelInboundHandlerAdapter {
+
+    private Dispatcher dis;
+
+    public ServerRequestHandler(Dispatcher dis) {
+        this.dis = dis;
+    }
 
     /**
      * provider
@@ -40,14 +48,32 @@ public class ServerRequestHandler extends ChannelInboundHandlerAdapter {
         ctx.executor().parent().next().execute(new Runnable() {
             @Override
             public void run() {
-                String execThreadName = Thread.currentThread().getName();
+
+                String serviceName = requestPkg.getContent().getName();
+                String method = requestPkg.getContent().getMethodName();
+                Object c = dis.get(serviceName);
+                Class<?> clazz = c.getClass();
+                Object res = null;
+                try {
+                    Method m = clazz.getMethod(method, requestPkg.getContent().getParameterTypes());
+                    res = m.invoke(c, requestPkg.getContent().getArgs());
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+
+
+//                String execThreadName = Thread.currentThread().getName();
 
                 MyContent content = new MyContent();
-                String s = "io thread: " + ioThreadName +
-                        " exec thread: " + execThreadName +
-                        " from args: " + requestPkg.getContent().getArgs()[0];
+//                String s = "io thread: " + ioThreadName +
+//                        " exec thread: " + execThreadName +
+//                        " from args: " + requestPkg.getContent().getArgs()[0];
 //                System.out.println(s);
-                content.setRes(s);
+                content.setRes((String) res);
                 byte[] contentByte = SerDerUtil.serialize(content);
 
                 MyHeader responseHeader = new MyHeader();
